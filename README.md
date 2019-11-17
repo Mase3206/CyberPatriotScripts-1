@@ -2,6 +2,10 @@
 
 https://www.uscyberpatriot.org/competition/training-materials/practice-images (Practice images)
 
+# Forked
+
+This repository was forked from VBQL/CyberPatriotScripts within license.
+
 # Create Pull Requests If You Have Any Additions Thanks
 
 # Cyber Patriot Wellesley Team's automated script on securing the competition. For Cyber Patriot 2016-2018
