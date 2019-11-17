@@ -23,9 +23,11 @@ fi
 #aptUpFun
 #aptInstFun
 #deleteFileFun
-#firewallFun
+#firewallFun1
+#firewallFun2
 #sysCtlFun
 #scanFun
+#disableSuFun
 startFun()
 {
 	clear
@@ -39,9 +41,11 @@ startFun()
 	aptUpFun
 	aptInstFun
 	deleteFileFun
-	firewallFun
+	#firewallFun1
+	firewallFun2
 	sysCtlFun
 	scanFun
+	disableSuFun
 	printf "\033[1;31mDone!\033[0m\n"
 }
 cont(){
@@ -234,7 +238,10 @@ deleteFileFun(){
 	cat /tmp/777s
 	cont
 }
-firewallFun(){
+firewallFun1(){
+	#
+	# THIS METHOD IS CURRENTLY DISABLED. REFER TO firewallFun2.
+	#
 	printf "\033[1;31mSetting up firewall...\033[0m\n"
 	#--------- Setup Firewall ----------------
 	#Please verify that the firewall wont block any services, such as an Email server, when defaulted.
@@ -343,6 +350,10 @@ firewallFun(){
 	ip6tables-save > /etc/iptables/rules.v6
 	cont
 }
+firewallFun2{
+	sudo apt-get install ufw
+	sudo ufw enable
+}
 sysCtlFun(){
 	printf "\033[1;31mMaking Sysctl Secure...\033[0m\n"
 	#--------- Secure /etc/sysctl.conf ----------------
@@ -395,6 +406,12 @@ repoFun(){
 	gpg /etc/apt/trusted.gpg > /tmp/trustedGPG
 	printf "\033[1;31mPlease check /tmp/trustedGPG for trusted GPG keys\033[0m\n"
 	cont
+}
+
+disableSuFun(){
+	echo "Disabling 'sudo su'"
+	sed -i s/"orarom ALL=(ALL) ALL"/"orarom ALL = ALL, !/bin/sudo"/g /etc/sudoers
+	
 }
 
 startFun
