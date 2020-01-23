@@ -13,6 +13,7 @@ if [ "$EUID" -ne 0 ] ;
 	then echo "Run as Root"
 	exit
 fi
+
 #List of Functions:
 #PasswdFun
 #zeroUidFun
@@ -21,13 +22,14 @@ fi
 #fileSecFun
 #netSecFun
 #aptUpFun
-#aptInstFun
+#aptInstFun (unused)
 #deleteFileFun
-#firewallFun1
-#firewallFun2
+#firewallFun
 #sysCtlFun
 #scanFun
 #disableSuFun
+#disableGuestFun
+
 startFun()
 {
 	clear
@@ -39,14 +41,15 @@ startFun()
 	fileSecFun
 	netSecFun
 	aptUpFun
-	aptInstFun
+	#aptInstFun
 	deleteFileFun
-	#firewallFun1
-	firewallFun2
+	firewallFun
 	sysCtlFun
 	scanFun
 	disableSuFun
+	passwdSecurityFun
 	printf "\033[1;31mDone!\033[0m\n"
+	additionalResourcesFun
 }
 cont(){
 	printf "\033[1;31mI have finished this task. Continue to next Task? (Y/N)\033[0m\n"
@@ -59,9 +62,12 @@ cont(){
 }
 PasswdFun(){
 	printf "\033[1;31mChanging Root's Password..\033[0m\n"
+	
+	echo "Make sure to change the unsecure passwords for the other users as well."
+	
 	#--------- Change Root Password ----------------
 	passwd
-	echo "Please change other user's passwords too"
+	echo "i@mTh3on1y$upEru53r"
 	cont
 }
 zeroUidFun(){
@@ -135,7 +141,7 @@ apacheSecFun(){
 	chown -R root:root /etc/apache
 
 	if [ -e /etc/apache2/apache2.conf ]; then
-		echo "<Directory />" >> /etc/apache2/apache2.conf
+		echo "<Directory>" >> /etc/apache2/apache2.conf
 		echo "        AllowOverride None" >> /etc/apache2/apache2.conf
 		echo "        Order Deny,Allow" >> /etc/apache2/apache2.conf
 		echo "        Deny from all" >> /etc/apache2/apache2.conf
@@ -203,16 +209,16 @@ aptUpFun(){
 	apt-get check
 	cont
 }
-aptInstFun(){
-	printf "\033[1;31mInstalling programs...\033[0m\n"
-	#--------- Download programs ----------------
-	apt-get install -y chkrootkit clamav rkhunter apparmor apparmor-profiles
-
-	#This will download lynis 2.4.0, which may be out of date
-	wget https://cisofy.com/files/lynis-2.5.5.tar.gz -O /lynis.tar.gz
-	tar -xzf /lynis.tar.gz --directory /usr/share/
-	cont
-}
+#aptInstFun(){
+#	printf "\033[1;31mInstalling programs...\033[0m\n"
+#	#--------- Download programs ----------------
+#	apt-get install -y chkrootkit clamav rkhunter apparmor apparmor-profiles
+#
+#	#This will download lynis 2.4.0, which may be out of date
+#	wget https://cisofy.com/files/lynis-2.5.5.tar.gz -O /lynis.tar.gz
+#	tar -xzf /lynis.tar.gz --directory /usr/share/
+#	cont
+#}
 deleteFileFun(){
 	printf "\033[1;31mDeleting dangerous files...\033[0m\n"
 	#--------- Delete Dangerous Files ----------------
@@ -238,9 +244,9 @@ deleteFileFun(){
 	cat /tmp/777s
 	cont
 }
-firewallFun2{
-	sudo apt-get install ufw
-	sudo ufw enable
+firewallFun(){
+	apt-get install ufw
+	ufw enable
 }
 sysCtlFun(){
 	printf "\033[1;31mMaking Sysctl Secure...\033[0m\n"
@@ -297,9 +303,66 @@ repoFun(){
 }
 
 disableSuFun(){
-	echo "Disabling 'sudo su'"
-	sed -i s/"orarom ALL=(ALL) ALL"/"orarom ALL = ALL, !/bin/sudo"/g /etc/sudoers
+	echo "Disabling 'sudo su'..."
+	sed -i s/"orarom ALL=(ALL) ALL"/"orarom ALL = ALL, !/bin/sudo"/g /etc/ers
 	
+}
+
+disableGuestFun(){
+	echo "Disabling the guest account..."
+	/usr/lib/lightdm/lightdm-set-defaults -l false
+	
+	cat /etc/lightdm/lightdm.conf >> /etc/lightdm/lightdm.conf.out
+	if grep -q 'allow-guest=false' '/etc/lightdm/lightdm.conf'
+		if [ -e /etc/lightdm/lightdm.conf ]; then
+			echo "allow-guest=false" >> /etc/lightdm/lightdm.conf
+		fi
+	fi
+}
+
+passwdSecurityFun(){
+	apt-get install libpam-cracklib perl -y
+	 cp /etc/pam.d/common-password /etc/pamd/common-password.backup
+	
+	if [ -e /etc/pam.d/common-password ]; then
+		if grep -q "password required pam_cracklib.so retry=3 minlen=9 difok=3" /etc/pam.d/common-password; then
+			echo "password required pam_cracklib.so retry=3 minlen=9 difok=3" >> /etc/pam.d/common-password
+		fi
+		
+		if grep -q "password [success=1 default=ignore] pam_unix.so use_authtok nullok md5" /etc/pam.d/common-password; then
+			echo "password [success=1 default=ignore] pam_unix.so use_authtok nullok md5" >> /etc/pam.d/common-password
+		fi
+		
+		if grep -q "password requisite pam_deny.so" /etc/pam.d/common-password; then
+			echo "password requisite pam_deny.so" >> /etc/pam.d/common-password
+		fi
+		
+		if grep -q "password required pam_permit.so" /etc/pam.d/common-password; then
+			echo "password required pam_permit.so"
+		fi
+		
+	if [ -e /etc/login.defs ]; then
+		perl -pi -e 's/PASS_MINLEN/PASS_MINLEN=9/g' /etc/login.defs
+	fi
+}
+
+additionalResourcesFun(){
+	echo "Here are some additional resources:"
+
+	echo " "
+	echo " "
+	
+	echo "WEBSITES FOR DEBIAN:"
+	echo " "
+	echo "debian.org/doc/manuals/debian-reference/ch04.en.html"
+	echo "https://tinyurl.com/ryj7xcc"
+	
+	echo " "
+	echo " "
+		
+	echo "WEBSITES FOR UBUNTU:"
+	echo " "
+	echo "https://tinyurl.com/ryj7xcc"
 }
 
 startFun
